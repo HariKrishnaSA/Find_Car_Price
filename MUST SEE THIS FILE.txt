@@ -1,0 +1,30 @@
+1. The Rectified Folder Structure
+For the "Server" logic to work, your files must be in these exact spots:
+
+Root Folder: Server.js, predict.py, train_model.py, CAR DATASET.csv, package.json, requirements.txt.
+
+Public Folder: Create a folder named public and move index.html inside it.
+
+2. Rectified Server.js (The Server Brain)
+This code is updated to handle the "system as a server" logic and specifically ignores the index.html error you saw earlier.
+
+3. The "Requirement Files" Command
+To see the final result, you must "import" the environment to your system. Run these commands in your VS Code terminal in this exact order:
+
+Step A: Install Node Libraries
+
+Step B: Install Python "Requirement Files"
+
+Step C: Train the AI on your System
+
+Step D: Launch the Server
+
+Summary of Rectifications Made:
+File Path Fix: The server now looks specifically for index.html inside public/.
+
+Cross-Platform Fix: It automatically detects if you are on Windows or Linux to choose the right Python command.
+
+Environment Sync: By using requirements.txt, any system you move this project to will install the exact same AI libraries.
+
+
+OK GOOD LUCK WITH MY PROJECT!!!!
