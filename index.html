@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find The Car Price | AI Diagnostic</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: radial-gradient(circle, #2c2c2c 0%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg, #ffffff05 1px, transparent 1px);
+            background-size: 30px 30px;
+            transform: rotate(15deg);
+            z-index: -1;
+        }
+
+        .container {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #333;
+            box-shadow: 0 0 30px rgba(0, 195, 255, 0.2);
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+        }
+
+        h2 { 
+            text-align: center; 
+            color: #ff0000; 
+            margin-bottom: 30px; 
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+        }
+
+        .input-group { margin-bottom: 20px; }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #00c3ff; 
+            font-size: 13px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(0, 195, 255, 0.5);
+        }
+
+        select, input { 
+            width: 100%; 
+            padding: 12px; 
+            background: #1a1a1a;
+            border: 1px solid #444; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-size: 16px;
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            border-color: #00c3ff;
+            box-shadow: 0 0 10px rgba(0, 195, 255, 0.4);
+        }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button { 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer; 
+            transition: all 0.3s;
+        }
+
+        .predict-btn { background: #00ff3c; color: #000; box-shadow: 0 0 10px rgba(0, 255, 60, 0.3); }
+        .detail-btn { background: #00c3ff; color: #000; box-shadow: 0 0 10px rgba(0, 195, 255, 0.3); }
+        .reset-btn { background: #333; color: #ccc; }
+
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+        #result { 
+            margin-top: 30px; 
+            font-size: 1.6em; 
+            font-weight: 900;
+            color: #fbff00; 
+            text-align: center; 
+            padding: 15px;
+            border-top: 1px dashed #444;
+            text-shadow: 0 0 15px rgba(251, 255, 0, 0.5);
+            min-height: 50px;
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal {
+            display: none; 
+            position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9); backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #111; margin: 10% auto; padding: 30px;
+            border: 2px solid #00c3ff; border-radius: 20px; width: 85%; max-width: 420px;
+            box-shadow: 0 0 50px rgba(0, 195, 255, 0.3);
+            color: white; animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .detail-item { border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .detail-label { color: #00c3ff; font-size: 10px; text-transform: uppercase; display: block; letter-spacing: 1px; }
+        .detail-value { font-size: 14px; font-weight: bold; }
+        .close-modal { float: right; color: #ff0000; font-size: 28px; font-weight: bold; cursor: pointer; }
+
+        .loader { color: #ff0000; font-style: italic; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>FIND PRICE ?</h2>
+    <form id="carForm">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <label>Car Brand</label>
+                <select id="brand" onchange="updateModels()" required>
+                    <option value="">Select</option>
+                    <option value="Maruti">Maruti</option>
+                    <option value="Hyundai">Hyundai</option>
+                    <option value="Honda">Honda</option>
+                    <option value="Toyota">Toyota</option>
+                    <option value="Mahindra">Mahindra</option>
+                    <option value="Tata">Tata</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Audi">Audi</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label>Car Model</label>
+                <select id="model" required>
+                    <option value="">Select Brand</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Year of Manufacture</label>
+            <input type="number" id="year" value="2018" min="1995" max="2025" required>
+        </div>
+
+        <div class="input-group">
+            <label>Total KM Driven</label>
+            <input type="number" id="km" value="30000" min="0" required>
+        </div>
+
+        <div class="input-group">
+            <label>Fuel & Transmission</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="fuel">
+                    <option value="Petrol">Petrol</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="CNG">CNG</option>
+                </select>
+                <select id="trans">
+                    <option value="Manual">Manual</option>
+                    <option value="Automatic">Automatic</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button type="submit" class="predict-btn">Predict</button>
+            <button type="button" class="detail-btn" onclick="showDetails()">Detail</button>
+            <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
+        </div>
+    </form>
+
+    <div id="result"></div>
+</div>
+
+<div id="detailModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h3 id="modalTitle" style="color: #00c3ff; border-bottom: 1px solid #00c3ff; padding-bottom: 10px; text-transform: uppercase;">CAR SPECS</h3>
+        <div class="detail-grid">
+            <div class="detail-item"><span class="detail-label">Engine Type</span><span id="detEngine" class="detail-value">-</span></div>
+            <div class="detail-item"><span class="detail-label">Max Power</span><span id="detPower" class="detail-value">-</span></div>
+            <div class="detail-item"><span class="detail-label">Mileage (ARA)</span><span id="detMileage" class="detail-value">-</span></div>
+            <div class="detail-item"><span class="detail-label">Popular Colors</span><span id="detColor" class="detail-value">-</span></div>
+            <div class="detail-item"><span class="detail-label">Seating</span><span id="detSeat" class="detail-value">-</span></div>
+            <div class="detail-item"><span class="detail-label">Drivetrain</span><span id="detDrive" class="detail-value">-</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modelData = {
+        "Maruti": ["Swift", "Alto", "Wagon", "800", "Celerio", "Ertiga", "Dzire", "Baleno"],
+        "Hyundai": ["Verna", "Creta", "Santro", "i10", "i20", "EON", "Venue", "Elantra"],
+        "Honda": ["City", "Amaze", "Civic", "Jazz", "WR-V", "Brio"],
+        "Toyota": ["Innova", "Fortuner", "Corolla", "Etios", "Camry"],
+        "Mahindra": ["Scorpio", "XUV500", "Bolero", "Thar", "Xylo"],
+        "Tata": ["Tiago", "Nexon", "Safari", "Indica", "Indigo", "Harrier", "Nano"],
+        "BMW": ["X5", "X1", "X3", "3 Series", "5 Series", "7 Series"],
+        "Audi": ["A4", "A6", "Q7", "Q5", "Q3", "A8"]
+    };
+
+    const specs = {
+        // MARUTI
+        "Swift": { engine: "1.2L DualJet Petrol", power: "89 bhp", mileage: "23.2 kmpl", color: "Solid Fire Red", seat: "5 Seater", drive: "FWD" },
+        "Alto": { engine: "796cc 3-Cyl Petrol", power: "47.3 bhp", mileage: "22.05 kmpl", color: "Uptown Red", seat: "5 Seater", drive: "FWD" },
+        "Wagon": { engine: "1.0L K10C Petrol", power: "67 bhp", mileage: "25.19 kmpl", color: "Magma Grey", seat: "5 Seater", drive: "FWD" },
+        "800": { engine: "796cc I3 Petrol", power: "37 bhp", mileage: "16.1 kmpl", color: "Superior White", seat: "4 Seater", drive: "FWD" },
+        "Celerio": { engine: "1.0L K10C Petrol", power: "66 bhp", mileage: "25.24 kmpl", color: "Speedy Blue", seat: "5 Seater", drive: "FWD" },
+        "Ertiga": { engine: "1.5L K15C Smart Hybrid", power: "102 bhp", mileage: "20.51 kmpl", color: "Dignity Brown", seat: "7 Seater", drive: "FWD" },
+        "Dzire": { engine: "1.2L K12N Petrol", power: "88.5 bhp", mileage: "24.12 kmpl", color: "Oxford Blue", seat: "5 Seater", drive: "FWD" },
+        "Baleno": { engine: "1.2L DualJet Petrol", power: "88.5 bhp", mileage: "22.35 kmpl", color: "Celestial Blue", seat: "5 Seater", drive: "FWD" },
+
+        // HYUNDAI
+        "Verna": { engine: "1.5L Turbo Petrol", power: "158 bhp", mileage: "18.6 kmpl", color: "Starry Night", seat: "5 Seater", drive: "FWD" },
+        "Creta": { engine: "1.5L MPi Petrol", power: "113 bhp", mileage: "17.0 kmpl", color: "Abyss Black", seat: "5 Seater", drive: "FWD" },
+        "Santro": { engine: "1.1L 4-Cyl Petrol", power: "68 bhp", mileage: "20.3 kmpl", color: "Fiery Red", seat: "5 Seater", drive: "FWD" },
+        "i10": { engine: "1.2L Kappa Petrol", power: "82 bhp", mileage: "20.7 kmpl", color: "Polar White", seat: "5 Seater", drive: "FWD" },
+        "i20": { engine: "1.2L Kappa Petrol", power: "82 bhp", mileage: "20.35 kmpl", color: "Fiery Red", seat: "5 Seater", drive: "FWD" },
+        "EON": { engine: "814cc Petrol", power: "55 bhp", mileage: "21.1 kmpl", color: "Star Dust", seat: "5 Seater", drive: "FWD" },
+        "Venue": { engine: "1.0L Turbo Petrol", power: "118 bhp", mileage: "18.1 kmpl", color: "Denim Blue", seat: "5 Seater", drive: "FWD" },
+        "Elantra": { engine: "2.0L Petrol", power: "150 bhp", mileage: "14.6 kmpl", color: "Marina Blue", seat: "5 Seater", drive: "FWD" },
+
+        // HONDA
+        "City": { engine: "1.5L i-VTEC Petrol", power: "119 bhp", mileage: "17.8 kmpl", color: "Golden Brown", seat: "5 Seater", drive: "FWD" },
+        "Amaze": { engine: "1.2L i-VTEC Petrol", power: "89 bhp", mileage: "18.6 kmpl", color: "Radiant Red", seat: "5 Seater", drive: "FWD" },
+        "Civic": { engine: "1.8L i-VTEC Petrol", power: "140 bhp", mileage: "16.5 kmpl", color: "Platinum White", seat: "5 Seater", drive: "FWD" },
+        "Jazz": { engine: "1.2L i-VTEC Petrol", power: "89 bhp", mileage: "16.6 kmpl", color: "Lunar Silver", seat: "5 Seater", drive: "FWD" },
+        "WR-V": { engine: "1.5L i-DTEC Diesel", power: "98 bhp", mileage: "23.7 kmpl", color: "Modern Steel", seat: "5 Seater", drive: "FWD" },
+        "Brio": { engine: "1.2L i-VTEC Petrol", power: "87 bhp", mileage: "18.5 kmpl", color: "Rally Red", seat: "5 Seater", drive: "FWD" },
+
+        // TOYOTA
+        "Innova": { engine: "2.4L Diesel", power: "148 bhp", mileage: "12.0 kmpl", color: "Super White", seat: "7/8 Seater", drive: "RWD" },
+        "Fortuner": { engine: "2.8L Diesel", power: "201 bhp", mileage: "10.0 kmpl", color: "Attitude Black", seat: "7 Seater", drive: "4WD" },
+        "Corolla": { engine: "1.8L Petrol", power: "138 bhp", mileage: "14.3 kmpl", color: "Silver Metallic", seat: "5 Seater", drive: "FWD" },
+        "Etios": { engine: "1.4L Diesel", power: "67 bhp", mileage: "23.59 kmpl", color: "Classic Grey", seat: "5 Seater", drive: "FWD" },
+        "Camry": { engine: "2.5L Hybrid Petrol", power: "176 bhp", mileage: "23.2 kmpl", color: "Burning Black", seat: "5 Seater", drive: "FWD" },
+
+        // MAHINDRA
+        "Scorpio": { engine: "2.2L mHawk Diesel", power: "130 bhp", mileage: "15.0 kmpl", color: "Napoli Black", seat: "7 Seater", drive: "RWD" },
+        "XUV500": { engine: "2.2L mHawk Diesel", power: "153 bhp", mileage: "15.1 kmpl", color: "Crimson Red", seat: "7 Seater", drive: "FWD" },
+        "Bolero": { engine: "1.5L mHawk Diesel", power: "75 bhp", mileage: "16.0 kmpl", color: "Lakeside Brown", seat: "7 Seater", drive: "RWD" },
+        "Thar": { engine: "2.2L mHawk Diesel", power: "130 bhp", mileage: "15.2 kmpl", color: "Red Rage", seat: "4 Seater", drive: "4WD" },
+        "Xylo": { engine: "2.2L mHawk Diesel", power: "120 bhp", mileage: "14.0 kmpl", color: "Diamond White", seat: "7 Seater", drive: "RWD" },
+
+        // TATA
+        "Tiago": { engine: "1.2L Revotron Petrol", power: "85 bhp", mileage: "20.0 kmpl", color: "Flame Red", seat: "5 Seater", drive: "FWD" },
+        "Nexon": { engine: "1.2L Turbo Petrol", power: "118 bhp", mileage: "17.33 kmpl", color: "Foliage Green", seat: "5 Seater", drive: "FWD" },
+        "Safari": { engine: "2.0L Kryotec Diesel", power: "168 bhp", mileage: "16.1 kmpl", color: "Tropical Mist", seat: "7 Seater", drive: "FWD" },
+        "Indica": { engine: "1.4L CR4 Diesel", power: "69 bhp", mileage: "25.0 kmpl", color: "Mint White", seat: "5 Seater", drive: "FWD" },
+        "Indigo": { engine: "1.4L Diesel", power: "70 bhp", mileage: "19.2 kmpl", color: "Jet Silver", seat: "5 Seater", drive: "FWD" },
+        "Harrier": { engine: "2.0L Diesel", power: "168 bhp", mileage: "16.35 kmpl", color: "Calypso Red", seat: "5 Seater", drive: "FWD" },
+        "Nano": { engine: "624cc Petrol", power: "37 bhp", mileage: "23.6 kmpl", color: "Damson Purple", seat: "4 Seater", drive: "RWD" },
+
+        // BMW
+        "X5": { engine: "3.0L Turbo Diesel", power: "262 bhp", mileage: "13.38 kmpl", color: "Phytonic Blue", seat: "5 Seater", drive: "AWD" },
+        "X1": { engine: "2.0L Diesel", power: "188 bhp", mileage: "19.62 kmpl", color: "Alpine White", seat: "5 Seater", drive: "FWD" },
+        "X3": { engine: "2.0L Turbo Petrol", power: "248 bhp", mileage: "13.17 kmpl", color: "Sophisto Grey", seat: "5 Seater", drive: "AWD" },
+        "3 Series": { engine: "2.0L Turbo Petrol", power: "255 bhp", mileage: "16.13 kmpl", color: "Portimao Blue", seat: "5 Seater", drive: "RWD" },
+        "5 Series": { engine: "2.0L Diesel", power: "188 bhp", mileage: "20.37 kmpl", color: "Carbon Black", seat: "5 Seater", drive: "RWD" },
+        "7 Series": { engine: "3.0L Inline-6 Diesel", power: "282 bhp", mileage: "17.6 kmpl", color: "Black Sapphire", seat: "5 Seater", drive: "RWD" },
+
+        // AUDI
+        "A4": { engine: "2.0L TFSI Petrol", power: "188 bhp", mileage: "17.42 kmpl", color: "Terra Grey", seat: "5 Seater", drive: "FWD" },
+        "A6": { engine: "2.0L Petrol", power: "241 bhp", mileage: "14.11 kmpl", color: "Mythos Black", seat: "5 Seater", drive: "FWD" },
+        "Q7": { engine: "3.0L V6 Petrol", power: "335 bhp", mileage: "11.21 kmpl", color: "Navarra Blue", seat: "7 Seater", drive: "AWD" },
+        "Q5": { engine: "2.0L TFSI Petrol", power: "245 bhp", mileage: "13.47 kmpl", color: "Manhattan Grey", seat: "5 Seater", drive: "AWD" },
+        "Q3": { engine: "2.0L Turbo Petrol", power: "188 bhp", mileage: "14.93 kmpl", color: "Pulse Orange", seat: "5 Seater", drive: "AWD" },
+        "A8": { engine: "3.0L V6 Petrol", power: "335 bhp", mileage: "12.0 kmpl", color: "Vesuvius Grey", seat: "5 Seater", drive: "AWD" },
+
+        "default": { engine: "Standard Internal Combustion", power: "90-120 bhp", mileage: "15-18 kmpl", color: "Standard White/Grey", seat: "5 Seater", drive: "FWD" }
+    };
+
+    function updateModels() {
+        const brand = document.getElementById('brand').value;
+        const modelSelect = document.getElementById('model');
+        modelSelect.innerHTML = '<option value="">Select Model</option>';
+        if (brand && modelData[brand]) {
+            modelData[brand].forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m; opt.innerHTML = m;
+                modelSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function showDetails() {
+        const model = document.getElementById('model').value;
+        if (!model) { alert("SYSTEM ERROR: Please select Brand and Model first."); return; }
+
+        const data = specs[model] || specs["default"];
+        document.getElementById('modalTitle').innerText = model.toUpperCase() + " DIAGNOSTIC";
+        document.getElementById('detEngine').innerText = data.engine;
+        document.getElementById('detPower').innerText = data.power;
+        document.getElementById('detMileage').innerText = data.mileage;
+        document.getElementById('detColor').innerText = data.color;
+        document.getElementById('detSeat').innerText = data.seat;
+        document.getElementById('detDrive').innerText = data.drive;
+
+        document.getElementById('detailModal').style.display = "block";
+    }
+
+    function closeModal() { document.getElementById('detailModal').style.display = "none"; }
+    window.onclick = function(e) { if (e.target == document.getElementById('detailModal')) closeModal(); }
+
+    function resetForm() { document.getElementById('carForm').reset(); document.getElementById('result').innerText = ''; updateModels(); }
+
+    document.getElementById('carForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '<span class="loader">Scanning Model Data...</span>';
+
+        const data = {
+            brand: document.getElementById('brand').value,
+            model: document.getElementById('model').value,
+            year: document.getElementById('year').value,
+            km: document.getElementById('km').value,
+            fuel: document.getElementById('fuel').value,
+            seller: "Individual",
+            trans: document.getElementById('trans').value,
+            owner: "First Owner"
+        };
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.price) {
+                const formattedPrice = parseFloat(result.price).toLocaleString('en-IN');
+                resultDiv.innerText = `VALUATION: ₹${formattedPrice}`;
+            }
+        } catch (err) { resultDiv.innerText = "LINK FAILURE: System Offline"; }
+    };
+</script>
+</body>
+</html>
